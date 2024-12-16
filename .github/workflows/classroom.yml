@@ -1,0 +1,41 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Check TASKID
+      id: check-taskid
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Check TASKID
+        setup-command: ''
+        command: bash -c 'id=$(cat TASKID.txt); if [[ ! -s TASKID.txt || id -lt 1
+          || id -gt 30 ]]; then echo "Invalid task id "$id; exit 1; else echo "TASKID
+          is "$id; fi'
+        timeout: 2
+    - name: Check report presence
+      id: check-report-presence
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Check report presence
+        setup-command: ''
+        command: bash -c "if [[ ! -s report.pdf ]]; then echo 'File 'report.pdf' not
+          found'; exit 1; fi"
+        timeout: 5
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        CHECK-TASKID_RESULTS: "${{steps.check-taskid.outputs.result}}"
+        CHECK-REPORT-PRESENCE_RESULTS: "${{steps.check-report-presence.outputs.result}}"
+      with:
+        runners: check-taskid,check-report-presence

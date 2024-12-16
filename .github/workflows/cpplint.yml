@@ -1,0 +1,20 @@
+name: cpplint
+on: [push, workflow_dispatch]
+jobs:
+  cpplint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - run: pip install cpplint
+    - run: cpplint --recursive .
+    - run: |
+        NOLINT=$(grep -Prs '^(?!#include\s*<(thread|mutex)>).*NOLINT' ./* | wc -l | awk '{print $1}')
+        if [[ $NOLINT -ne 0 ]]
+        then
+            echo "Use of NOLINT is forbidden! Don't be lazy and fix style errors."
+            exit 1
+        fi
+    - run: if [[ ! -s client.cpp ]]; then echo 'No client code found'; exit 1; fi
+    - run: if [[ ! -s server.cpp ]]; then echo 'No server code found'; exit 1; fi
+    - run: id=$(cat TASKID.txt); if [[ ! -s TASKID.txt || id -lt 1 || id -gt 30 ]]; then echo "Invalid task id "$id; exit 1; else echo "TASKID is "$id; fi

@@ -1,0 +1,47 @@
+name: Build and Test
+
+on:
+  push:
+    paths:
+      - '**/*' # Trigger on changes to any file
+  pull_request:
+  workflow_dispatch: # Allow manual triggering from GitHub UI
+
+job:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest] # Test on multiple platforms
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up dependencies
+      run: |
+        if [[ ${{ matrix.os }} == 'ubuntu-latest' ]]; then
+          sudo apt-get update && sudo apt-get install -y g++ make
+        elif [[ ${{ matrix.os }} == 'macos-latest' ]]; then
+          brew update && brew install gcc make
+        elif [[ ${{ matrix.os }} == 'windows-latest' ]]; then
+          choco install mingw make
+        fi
+
+    - name: Build the server application
+      run: |
+        g++ -o server server.cpp
+        echo "Build completed successfully."
+
+    - name: Run tests
+      run: |
+        chmod +x ./run_tests.sh
+        ./run_tests.sh
+
+    - name: Upload test results
+      if: always() # Ensure this step runs even if tests fail
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-results
+        path: test_results.txt
