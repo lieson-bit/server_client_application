@@ -1,0 +1,4 @@
+apple orange banana apple grape apple cherry orange apple
+grape banana apple apple orange
+orange banana apple grape apple
+banana apple orange apple grape
